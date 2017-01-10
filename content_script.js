@@ -1,30 +1,14 @@
-function createCell(cell, text, style) {
-  var div = document.createElement('div'), // create DIV element
-  txt = document.createTextNode(text); // create text node
-  div.appendChild(txt);                    // append text node to the DIV
-  div.setAttribute('class', style);        // set DIV class attribute
-  div.setAttribute('className', style);    // set DIV class attribute for IE (?!)
-  cell.parentElement.appendChild(div);                   // append DIV to the table cell
-}
+var data = {};
+var last = {};
+var players = [];
 
-function appendColumn() {
-        var tbl = document.getElementById('game-leaderboard'), // table reference
-        i;
-        // open loop for each row and append cell
-        for (i = 0; i < tbl.rows.length; i++) {
-                if (i == 0){
-                  var x = tbl.rows[i].insertCell(2);
-                  x.innerHTML = "Cities"
-                } else {
-                var x = tbl.rows[i].insertCell(2);
-                x.innerHTML = "0"
-                }
-        }
-}
+NUM_TURNS = 5;
+addedCityLabel = false
 
 function mode(array) {
   if(array.length == 0)
-      return null;
+    return null;
+
   var modeMap = {};
   var maxEl = array[0], maxCount = 1;
 
@@ -33,7 +17,7 @@ function mode(array) {
     if(modeMap[el] == null)
         modeMap[el] = 1;
       else
-          modeMap[el]++;  
+        modeMap[el]++;  
       if(modeMap[el] > maxCount){
         maxEl = el;
         maxCount = modeMap[el];
@@ -47,93 +31,65 @@ function inGame(){
   return document.getElementById("game-leaderboard");
 }
 
-
-var data = {};
-var last = {};
-var cities = {};
-var players = [];
-
-addedCityLabel = false
-
-function getPlayerArmy(player){
-  var players = document.getElementById("game-leaderboard").querySelectorAll('.leaderboard-name').length;
-  var leaderboard = document.getElementById('game-leaderboard')
-  for (var i = 0; i < players; i++){
-    if(leaderboard.rows[i + 1].children[1].classList[1] == player){
-      return leaderboard.rows[i + 1].children[3].innerHTML;
-    }
-  }
-
-  return null
+function getArmy(player){
+  var leaderboard = document.getElementById('game-leaderboard');
+  var player_cell = leaderboard.querySelectorAll('.leaderboard-name.' + player);
+  return parseInt(player_cell[0].nextSibling.nextSibling.innerHTML);
 }
 
-function setPlayerCities(player, cities){
-  var players = document.getElementById("game-leaderboard").querySelectorAll('.leaderboard-name').length;
-  var leaderboard = document.getElementById('game-leaderboard')
-  for (var i = 0; i < players; i++){
-    if(leaderboard.rows[i + 1].children[1].classList[1] == player){
-      leaderboard.rows[i + 1].children[2].innerHTML = cities;
-    }
-  }
+function updateCities(player, cities){
+  var leaderboard = document.getElementById('game-leaderboard');
+  var player_cell = leaderboard.querySelectorAll('.leaderboard-name.' + player);
+  player_cell[0].nextSibling.innerHTML = cities;
 }
 
 function turn(){
+  var leaderboard = document.getElementById('game-leaderboard');
 
-    if(!addedCityLabel){
-      appendColumn();  
+  // Initialise columns
+  if(!addedCityLabel){
+    leaderboard.rows[0].insertCell(leaderboard.rows[0].cells.length - 2).innerHTML = "Cities";
+    var table_length = leaderboard.rows[0].cells.length;
 
+    for (var i = 0, row; row = leaderboard.rows[i + 1]; i ++){
+      var x = row.insertCell(table_length - 3);
+      x.innerHTML = "0";
 
-      var elementExists = document.getElementById("game-leaderboard");
-      var numplayers = elementExists.querySelectorAll('.leaderboard-name').length;
-      var leaderboard = document.getElementById('game-leaderboard');
-
-      for (var i = 0; i < numplayers; i ++){
-        players.push(leaderboard.rows[i + 1].children[1].classList[1]);
-      }
-
-      for (var i = 0; i < numplayers; i++) {
-        data[players[i]] = new Array();
-        last[players[i]] = new Array();
-        last[players[i]] = new Array();
-        cities[players[i]] = new Array();
-      }
-
-      addedCityLabel = true;
+      // Store player data
+      players.push(row.children[table_length - 4].classList[1]);
+      data[players[i]] = new Array();
+      last[players[i]] = new Array();
     }
+    addedCityLabel = true;
+  }
 
-    var leaderboard = document.getElementById('game-leaderboard');
-    var elementExists = document.getElementById("game-leaderboard");
-    var numplayers = elementExists.querySelectorAll('.leaderboard-name').length;
-    
-    
-    for(var j = 0; j < numplayers; j++){
-      var playerColor = players[j];
-      if (typeof last == 'undefined' || last.length < 1) {
-        last[playerColor].push(getPlayerArmy(playerColor));
-      }
+  // Update city counts
+  for(var i = 0; i < players.length; i++) {
+    var player = players[i];
+    var current_army = getArmy(player);
 
-      else {
-        inc = parseInt(getPlayerArmy(playerColor)) - parseInt(last[playerColor][last[playerColor].length - 1]);
-        last[playerColor].push(getPlayerArmy(playerColor));
-        if (inc > 0){
-          data[playerColor].push(inc);
+    // Save army count
+    last[player].push(current_army);
+
+    // Check change in army
+    if(last[player].length > 1) {
+      var army_change = current_army - last[player][last[player].length - 2];
+
+      // Save army change
+      if (army_change > 0) {
+        data[player].push(army_change);
+
+        // Calculate number of cities
+        if(data[player].length >= NUM_TURNS) {
+          var guess_cities = mode(data[player].slice(data[player].length - NUM_TURNS));
+          updateCities(player, guess_cities - 1); 
         }
-
-        if (inc > 0 && data[playerColor].length > 7){
-          guess_cities = mode(data[playerColor].slice(data[playerColor].length - 6));
-          cities[playerColor].push(guess_cities);
-        }
       }
-
-      if (!(typeof cities[playerColor] == 'undefined' || cities[playerColor].length < 1)) {
-        setPlayerCities(playerColor, cities[playerColor][cities[playerColor].length - 1] - 1); 
-
     }
   }
 }
 
 turnInterval = setInterval(function() {
-
   if (inGame()){
     turn();
   } else {

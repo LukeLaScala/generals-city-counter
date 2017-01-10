@@ -1,14 +1,14 @@
 
 {
-  "name": "Generals.io Extension",
-  "description": "Shows crucial enemy info",
+  "name": "Generals.io City Counter",
+  "description": "Displays a city count next to each player on Generals.io",
   "version": "1.0",
   "permissions": [
     "activeTab"
   ],
   "content_scripts": [
     {
-      "matches": ["http://generals.io/*", "https://generals.io/*"],
+      "matches": ["http://generals.io/*", "http://eu.generals.io/*"],
       "js": ["content_script.js"]
     }
   ],
