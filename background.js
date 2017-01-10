@@ -13,11 +13,11 @@ function appendColumn() {
         // open loop for each row and append cell
         for (i = 0; i < tbl.rows.length; i++) {
                 if (i == 0){
-                  var x = tbl.rows[i].insertCell(tableLength);
+                  var x = tbl.rows[i].insertCell(2);
                   x.innerHTML = "Cities"
                 } else {
-                var x = tbl.rows[i].insertCell(tableLength);
-                x.innerHTML = "0"
+                var x = tbl.rows[i].insertCell(2);
+                x.innerHTML = "loading..."
                 }
         }
 }
@@ -47,26 +47,20 @@ function inGame(){
   return document.getElementById("game-leaderboard");
 }
 
-function playingTeamGame(){
-  var leaderboard = document.getElementById('game-leaderboard');
-  return leaderboard.rows[0].children[0].innerHTML == "Team";
-}
-
 
 var data = {};
 var last = {};
 var cities = {};
 var players = [];
-var tableLength = leaderboard.rows[0].cells.length;
+
 addedCityLabel = false
-inTeamGame = 0
 
 function getPlayerArmy(player){
   var players = document.getElementById("game-leaderboard").querySelectorAll('.leaderboard-name').length;
-  var leaderboard = document.getElementById('game-leaderboard');
+  var leaderboard = document.getElementById('game-leaderboard')
   for (var i = 0; i < players; i++){
-    if(leaderboard.rows[i + 1].children[1 + inTeamGame].classList[1] == player){
-      return leaderboard.rows[i + 1].children[3 + inTeamGame].innerHTML;
+    if(leaderboard.rows[i + 1].children[1].classList[1] == player){
+      return leaderboard.rows[i + 1].children[3].innerHTML;
     }
   }
 
@@ -77,8 +71,8 @@ function setPlayerCities(player, cities){
   var players = document.getElementById("game-leaderboard").querySelectorAll('.leaderboard-name').length;
   var leaderboard = document.getElementById('game-leaderboard')
   for (var i = 0; i < players; i++){
-    if(leaderboard.rows[i + 1].children[1 + inTeamGame].classList[1] == player){
-      leaderboard.rows[i + 1].children[2 + inTeamGame].innerHTML = cities;
+    if(leaderboard.rows[i + 1].children[1].classList[1] == player){
+      leaderboard.rows[i + 1].children[2].innerHTML = cities;
     }
   }
 }
@@ -86,7 +80,6 @@ function setPlayerCities(player, cities){
 function turn(){
 
     if(!addedCityLabel){
-
       appendColumn();  
 
 
@@ -95,7 +88,7 @@ function turn(){
       var leaderboard = document.getElementById('game-leaderboard');
 
       for (var i = 0; i < numplayers; i ++){
-        players.push(leaderboard.rows[i + 1].children[1 + inTeamGame].classList[1]);
+        players.push(leaderboard.rows[i + 1].children[1].classList[1]);
       }
 
       for (var i = 0; i < numplayers; i++) {
@@ -127,7 +120,7 @@ function turn(){
         }
 
         if (inc > 0 && data[playerColor].length > 7){
-          guess_cities = mode(data[playerColor].slice(data[playerColor].length - 6));
+          guess_cities = mode(data[playerColor].slice(data[playerColor].length - 7));
           cities[playerColor].push(guess_cities);
         }
       }
@@ -135,18 +128,15 @@ function turn(){
       if (!(typeof cities[playerColor] == 'undefined' || cities[playerColor].length < 1)) {
         setPlayerCities(playerColor, cities[playerColor][cities[playerColor].length - 1] - 1); 
       }
+
     }
-}
+  }
 
 turnInterval = setInterval(function() {
 
   if (inGame()){
-    if (playingTeamGame()){
-      inTeamGame = 1;
-    }
     turn();
   } else {
     addedCityLabel = false
   }
 }, 500);
-
