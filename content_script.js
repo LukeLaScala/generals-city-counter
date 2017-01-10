@@ -17,7 +17,7 @@ function appendColumn() {
                   x.innerHTML = "Cities"
                 } else {
                 var x = tbl.rows[i].insertCell(2);
-                x.innerHTML = "loading..."
+                x.innerHTML = "0"
                 }
         }
 }
