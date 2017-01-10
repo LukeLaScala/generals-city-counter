@@ -127,10 +127,10 @@ function turn(){
 
       if (!(typeof cities[playerColor] == 'undefined' || cities[playerColor].length < 1)) {
         setPlayerCities(playerColor, cities[playerColor][cities[playerColor].length - 1] - 1); 
-      }
 
     }
   }
+}
 
 turnInterval = setInterval(function() {
 
