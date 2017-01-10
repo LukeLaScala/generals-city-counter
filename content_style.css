@@ -1,0 +1,9 @@
+.red td{background-color:red !important}
+.green td{background-color:green !important}
+.blue td{background-color:blue !important}
+.purple td{background-color:purple !important}
+.teal td{background-color:teal !important}
+.darkgreen td{background-color:#004600 !important}
+.orange td{background-color:orange !important}
+.maroon td{background-color:maroon !important}
+.flash td {transition:.5s;}
