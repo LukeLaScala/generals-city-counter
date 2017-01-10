@@ -1,0 +1,19 @@
+
+{
+  "name": "Page Redder",
+  "description": "Make the current page red",
+  "version": "2.0",
+  "permissions": [
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://generals.io/*", "https://generals.io/*"],
+      "js": ["content_script.js"]
+    }
+  ],
+  "browser_action": {
+    "default_title": "Make this page red"
+  },
+  "manifest_version": 2
+}
