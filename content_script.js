@@ -1,12 +1,9 @@
-initialize();
+var data = {};
+var last = {};
+var players = [];
+addedCityLabel = false
+NUM_TURNS = 6;
 
-function initialize(){
-  var data = {};
-  var last = {};
-  var players = [];
-  addedCityLabel = false
-  NUM_TURNS = 6;
-}
 function mode(array) {
   if(array.length == 0)
     return null;
@@ -104,6 +101,9 @@ turnInterval = setInterval(function() {
   if (inGame()){
     turn();
   } else {
-    initialize();
+    var data = {};
+    var last = {};
+    var players = [];
+    addedCityLabel = false
   }
 }, 500);
