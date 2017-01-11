@@ -102,5 +102,8 @@ turnInterval = setInterval(function() {
     turn();
   } else {
     addedCityLabel = false
+    data = {};
+    last = {};
+    players = [];
   }
 }, 500);
