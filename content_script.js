@@ -1,152 +1,112 @@
-function createCell(cell, text, style) {
-  var div = document.createElement('div'), // create DIV element
-  txt = document.createTextNode(text); // create text node
-  div.appendChild(txt);                    // append text node to the DIV
-  div.setAttribute('class', style);        // set DIV class attribute
-  div.setAttribute('className', style);    // set DIV class attribute for IE (?!)
-  cell.parentElement.appendChild(div);                   // append DIV to the table cell
-}
+var data = {};
+var last = {};
+var players = [];
 
-function appendColumn() {
-        var tbl = document.getElementById('game-leaderboard'), // table reference
-        i;
-        // open loop for each row and append cell
-        for (i = 0; i < tbl.rows.length; i++) {
-                if (i == 0){
-                  var x = tbl.rows[i].insertCell(2 + inTeamGame);
-                  x.innerHTML = "Cities"
-                } else {
-                var x = tbl.rows[i].insertCell(2 + inTeamGame);
-                x.innerHTML = "0"
-                }
-        }
-}
+chrome.storage.sync.get({
+  numTurns: 10,
+  showAllChanges: false
+}, function(items) {
+  NUM_TURNS = items.numTurns;
+  SHOW_ALL_CHANGES = items.showAllChanges;
+});
 
+addedCityLabel = false
+
+// mode: https://stackoverflow.com/a/3783970
 function mode(array) {
-  if(array.length == 0)
-      return null;
-  var modeMap = {};
-  var maxEl = array[0], maxCount = 1;
-
-  for(var i = 0; i < array.length; i++) {
-    var el = array[i];
-    if(modeMap[el] == null)
-        modeMap[el] = 1;
-      else
-          modeMap[el]++;  
-      if(modeMap[el] > maxCount){
-        maxEl = el;
-        maxCount = modeMap[el];
-      }
+  var freq = {};
+  var max = 0;
+  var result = null;
+  for(var v in array) {
+    freq[array[v]] = (freq[array[v]] || 0) + 1;
+    if(freq[array[v]] > max) {
+      max = freq[array[v]];
+      result = array[v];
     }
-
-  return maxEl;
+  }
+  return result;
 }
 
 function inGame(){
   return document.getElementById("game-leaderboard");
 }
 
-function playingTeamGame(){
+function getArmy(player){
   var leaderboard = document.getElementById('game-leaderboard');
-  return leaderboard.rows[0].children[0].innerHTML == "Team";
+  var player_cell = leaderboard.querySelectorAll('.leaderboard-name.' + player);
+  return parseInt(player_cell[0].nextSibling.innerHTML);
 }
 
-
-var data = {};
-var last = {};
-var cities = {};
-var players = [];
-
-addedCityLabel = false
-inTeamGame = 0
-
-function getPlayerArmy(player){
-  var players = document.getElementById("game-leaderboard").querySelectorAll('.leaderboard-name').length;
+function updateCities(player, cities){
   var leaderboard = document.getElementById('game-leaderboard');
-  for (var i = 0; i < players; i++){
-    if(leaderboard.rows[i + 1].children[1 + inTeamGame].classList[1] == player){
-      return leaderboard.rows[i + 1].children[3 + inTeamGame].innerHTML;
-    }
-  }
+  var cities_cell = leaderboard.querySelectorAll('.cities-' + player);
+  var player_row = cities_cell[0].parentElement;
 
-  return null
-}
-
-function setPlayerCities(player, cities){
-  var players = document.getElementById("game-leaderboard").querySelectorAll('.leaderboard-name').length;
-  var leaderboard = document.getElementById('game-leaderboard')
-  for (var i = 0; i < players; i++){
-    if(leaderboard.rows[i + 1].children[1 + inTeamGame].classList[1] == player){
-      leaderboard.rows[i + 1].children[2 + inTeamGame].innerHTML = cities;
-    }
+  // Add flash if cities increase to > 0 or SHOW_ALL_CHANGES set
+  if ((SHOW_ALL_CHANGES && parseInt(cities_cell[0].innerHTML) !== cities)
+      || (cities_cell[0].innerHTML == "0" && cities > 0)) {
+    setTimeout(function(row, cl) { row.className = cl; }, 
+      1000, player_row, player_row.className);
+    player_row.className += " flash " + player;
   }
+  cities_cell[0].innerHTML = cities;
 }
 
 function turn(){
+  var leaderboard = document.getElementById('game-leaderboard');
 
-    if(!addedCityLabel){
+  // Initialise columns
+  if(!addedCityLabel){
+    leaderboard.rows[0].insertCell(leaderboard.rows[0].cells.length).innerHTML = "Cities";
+    var table_length = leaderboard.rows[0].cells.length;
 
-      appendColumn();  
+    for (var i = 0, row; row = leaderboard.rows[i + 1]; i ++){
+      var player_color = row.children[table_length - 4].classList[1];
+      var x = row.insertCell(table_length - 1);
+      x.innerHTML = "0";
+      x.className = "cities-" + player_color;
 
-
-      var elementExists = document.getElementById("game-leaderboard");
-      var numplayers = elementExists.querySelectorAll('.leaderboard-name').length;
-      var leaderboard = document.getElementById('game-leaderboard');
-
-      for (var i = 0; i < numplayers; i ++){
-        players.push(leaderboard.rows[i + 1].children[1 + inTeamGame].classList[1]);
-      }
-
-      for (var i = 0; i < numplayers; i++) {
-        data[players[i]] = new Array();
-        last[players[i]] = new Array();
-        last[players[i]] = new Array();
-        cities[players[i]] = new Array();
-      }
-
-      addedCityLabel = true;
+      // Store player data
+      players.push(player_color);
+      data[players[i]] = new Array();
+      last[players[i]] = new Array();
     }
+    addedCityLabel = true;
+  }
 
-    var leaderboard = document.getElementById('game-leaderboard');
-    var elementExists = document.getElementById("game-leaderboard");
-    var numplayers = elementExists.querySelectorAll('.leaderboard-name').length;
-    
-    
-    for(var j = 0; j < numplayers; j++){
-      var playerColor = players[j];
-      if (typeof last == 'undefined' || last.length < 1) {
-        last[playerColor].push(getPlayerArmy(playerColor));
-      }
+  // Update city counts
+  for(var i = 0; i < players.length; i++) {
+    var player = players[i];
+    var current_army = getArmy(player);
 
-      else {
-        inc = parseInt(getPlayerArmy(playerColor)) - parseInt(last[playerColor][last[playerColor].length - 1]);
-        last[playerColor].push(getPlayerArmy(playerColor));
-        if (inc > 0){
-          data[playerColor].push(inc);
+    // Save army count
+    last[player].push(current_army);
+
+    // Check change in army
+    if(last[player].length > 1) {
+      var army_change = current_army - last[player][last[player].length - 2];
+
+      // Save army change
+      if (army_change > 0) {
+        data[player].push(army_change);
+
+        // Calculate number of cities
+        if(data[player].length >= NUM_TURNS) {
+          var guess_cities = mode(data[player].slice(data[player].length - NUM_TURNS));
+          updateCities(player, guess_cities - 1); 
         }
-
-        if (inc > 0 && data[playerColor].length > 7){
-          guess_cities = mode(data[playerColor].slice(data[playerColor].length - 6));
-          cities[playerColor].push(guess_cities);
-        }
       }
-
-      if (!(typeof cities[playerColor] == 'undefined' || cities[playerColor].length < 1)) {
-        setPlayerCities(playerColor, cities[playerColor][cities[playerColor].length - 1] - 1); 
-
     }
   }
 }
 
 turnInterval = setInterval(function() {
-
   if (inGame()){
-    if (playingTeamGame()){
-      inTeamGame = 1;
-    }
     turn();
   } else {
     addedCityLabel = false
+    data = {};
+    last = {};
+    players = [];
   }
 }, 500);
