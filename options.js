@@ -2,10 +2,11 @@
 function save_options() {
   chrome.storage.sync.set({
     numTurns: document.getElementById('numTurns').value,
-    showAllChanges: document.getElementById('showAllChanges').checked
+    showAllChanges: document.getElementById('showAllChanges').checked,
+    useCountDown: document.getElementById('useCountDown').checked
   }, function() {
     document.getElementById('status').textContent = 'Options saved.';
-    setTimeout(function() { 
+    setTimeout(function() {
       document.getElementById('status').textContent = '';
     }, 750);
   });
@@ -15,10 +16,12 @@ function save_options() {
 function restore_options() {
   chrome.storage.sync.get({
     numTurns: 10,
-    showAllChanges: false
+    showAllChanges: false,
+    useCountDown: false
   }, function(items) {
     document.getElementById('numTurns').value = items.numTurns;
     document.getElementById('showAllChanges').checked = items.showAllChanges;
+    document.getElementById('useCountDown').checked = items.useCountDown;
   });
 }
 
