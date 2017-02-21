@@ -4,13 +4,16 @@ var players = [];
 
 chrome.storage.sync.get({
   numTurns: 10,
-  showAllChanges: false
+  showAllChanges: false,
+  useCountDown: false
 }, function(items) {
   NUM_TURNS = items.numTurns;
   SHOW_ALL_CHANGES = items.showAllChanges;
+  USE_COUNTDOWN = items.useCountDown;
 });
 
 addedCityLabel = false
+addedTurnCounter = false
 
 // mode: https://stackoverflow.com/a/3783970
 function mode(array) {
@@ -31,6 +34,18 @@ function inGame(){
   return document.getElementById("game-leaderboard");
 }
 
+function getNextIncrease(){
+  var turnCounter = document.getElementById('turn-counter');
+  var currentTurn = parseInt(turnCounter.textContent.split(' ')[1]);
+  if(USE_COUNTDOWN){
+    var turnsLeft = 25 - (currentTurn % 25);
+  } else {
+    var turnsLeft = 25 - (currentTurn % 25) + parseInt(currentTurn);
+  }
+  ;
+  return " Next Increase: " + turnsLeft;
+}
+
 function getArmy(player){
   var leaderboard = document.getElementById('game-leaderboard');
   var player_cell = leaderboard.querySelectorAll('.leaderboard-name.' + player);
@@ -45,7 +60,7 @@ function updateCities(player, cities){
   // Add flash if cities increase to > 0 or SHOW_ALL_CHANGES set
   if ((SHOW_ALL_CHANGES && parseInt(cities_cell[0].innerHTML) !== cities)
       || (cities_cell[0].innerHTML == "0" && cities > 0)) {
-    setTimeout(function(row, cl) { row.className = cl; }, 
+    setTimeout(function(row, cl) { row.className = cl; },
       1000, player_row, player_row.className);
     player_row.className += " flash " + player;
   }
@@ -54,6 +69,7 @@ function updateCities(player, cities){
 
 function turn(){
   var leaderboard = document.getElementById('game-leaderboard');
+  var turnCounter = document.getElementById('turn-counter');
 
   // Initialise columns
   if(!addedCityLabel){
@@ -74,6 +90,17 @@ function turn(){
     addedCityLabel = true;
   }
 
+  // add Turn Counter
+  if(!addedTurnCounter) {
+    var nextIncrease = document.createElement('div');
+    nextIncrease.id = "nextIncreaseCounter";
+    turnCounter.appendChild(nextIncrease);
+
+    addedTurnCounter = true;
+  }
+  var nextIncreaseCounter = document.getElementById('nextIncreaseCounter');
+  nextIncreaseCounter.textContent = getNextIncrease();
+
   // Update city counts
   for(var i = 0; i < players.length; i++) {
     var player = players[i];
@@ -93,7 +120,7 @@ function turn(){
         // Calculate number of cities
         if(data[player].length >= NUM_TURNS) {
           var guess_cities = mode(data[player].slice(data[player].length - NUM_TURNS));
-          updateCities(player, guess_cities - 1); 
+          updateCities(player, guess_cities - 1);
         }
       }
     }
@@ -105,6 +132,7 @@ turnInterval = setInterval(function() {
     turn();
   } else {
     addedCityLabel = false
+    addedTurnCounter = false
     data = {};
     last = {};
     players = [];
